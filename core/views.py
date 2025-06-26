@@ -63,3 +63,39 @@ async def get_user_view(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+
+
+# Post Views
+@router.post("/posts/", response_model=PostResponseSerializer)
+async def create_post_view(post: PostCreateSerializer, db: Session = Depends(get_db)):
+    """Create a new post"""
+    # Generate slug from title
+    slug = post.title.lower().replace(" ", "-").replace(".", "")
+    
+    db_post = Post(**post.dict(), slug=slug)
+    db.add(db_post)
+    db.commit()
+    db.refresh(db_post)
+    return db_post
+
+@router.get("/posts/", response_model=List[PostResponseSerializer])
+async def list_posts_view(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    published_only: bool = Query(False),
+    category_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """List posts with filtering options"""
+    query = db.query(Post)
+    
+    if published_only:
+        query = query.filter(Post.is_published == True)
+    
+    if category_id:
+        query = query.filter(Post.category_id == category_id)
+    
+    posts = query.offset(skip).limit(limit).all()
+    return posts
