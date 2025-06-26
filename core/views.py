@@ -30,3 +30,36 @@ async def create_user_view(user: UserCreateSerializer, db: Session = Depends(get
     db.commit()
     db.refresh(db_user)
     return db_user
+
+
+
+
+
+
+
+@router.get("/users/", response_model=List[UserResponseSerializer])
+async def list_users_view(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    search: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """List all users with pagination and search"""
+    query = db.query(User)
+    
+    if search:
+        query = query.filter(
+            (User.username.contains(search)) | 
+            (User.email.contains(search))
+        )
+    
+    users = query.offset(skip).limit(limit).all()
+    return users
+
+@router.get("/users/{user_id}", response_model=UserResponseSerializer)
+async def get_user_view(user_id: int, db: Session = Depends(get_db)):
+    """Get user by ID"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
