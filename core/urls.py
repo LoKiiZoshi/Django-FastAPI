@@ -12,3 +12,11 @@ urlpatterns = [
     {"path": "/api/categories/", "methods": ["GET", "POST"], "handler": "categories"},
     {"path": "/admin/", "methods": ["GET"], "handler": "admin_panel"},
 ]
+
+
+
+# Route registration function
+def include_router(app):
+    """Include all core routes in the main FastAPI app"""
+    from .views import router as core_router
+    app.include_router(core_router, prefix="/core")
