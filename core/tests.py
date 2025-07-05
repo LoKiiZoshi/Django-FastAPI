@@ -1,30 +1,77 @@
-import pytest
-from fastapi.testclient import TestClient
-from main import app
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from rest_framework.test import APITestCase
+from rest_framework import status
+from .models import Category, Product, Order
 
-client = TestClient(app)
+User = get_user_model()
 
-def test_root_endpoint():
-    response = client.get("/")
-    assert response.status_code == 200
-    assert "message" in response.json()
+class UserModelTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
 
-def test_create_user():
-    user_data = {
-        "username": "testuser",
-        "email": "test@example.com",
-        "full_name": "Test User"
-    }
-    response = client.post("/api/users/", json=user_data)
-    assert response.status_code == 200
-    assert response.json()["username"] == "testuser"
+    def test_user_creation(self):
+        self.assertEqual(self.user.email, 'test@example.com')
+        self.assertTrue(self.user.check_password('testpass123'))
 
-def test_get_users():
-    response = client.get("/api/users/")
-    assert response.status_code == 200
-    assert isinstance(response.json(), list)
+class CategoryModelTest(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(
+            name='Electronics',
+            slug='electronics',
+            description='Electronic items'
+        )
 
-def test_health_check():
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json()["status"] == "healthy"
+    def test_category_creation(self):
+        self.assertEqual(self.category.name, 'Electronics')
+        self.assertEqual(str(self.category), 'Electronics')
+
+class ProductModelTest(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(
+            name='Electronics',
+            slug='electronics'
+        )
+        self.product = Product.objects.create(
+            name='Laptop',
+            slug='laptop',
+            description='Gaming laptop',
+            category=self.category,
+            price=999.99,
+            stock=10
+        )
+
+    def test_product_creation(self):
+        self.assertEqual(self.product.name, 'Laptop')
+        self.assertTrue(self.product.is_in_stock)
+
+class APITestCase(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='testuser',
+            email='test@example.com',
+            password='testpass123'
+        )
+
+    def test_user_registration(self):
+        data = {
+            'username': 'newuser',
+            'email': 'new@example.com',
+            'password': 'newpass123',
+            'password_confirm': 'newpass123'
+        }
+        response = self.client.post('/api/auth/register/', data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_user_login(self):
+        data = {
+            'email': 'test@example.com',
+            'password': 'testpass123'
+        }
+        response = self.client.post('/api/auth/login/', data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('token', response.data)
