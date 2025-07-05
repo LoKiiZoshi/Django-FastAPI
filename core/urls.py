@@ -1,22 +1,30 @@
-from fastapi import APIRouter
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from . import views
 
-router = APIRouter()
-
-# URL patterns equivalent
+# API URL patterns
 urlpatterns = [
-    {"path": "/api/users/", "methods": ["GET", "POST"], "handler": "users"},
-    {"path": "/api/users/{user_id}", "methods": ["GET", "PUT", "DELETE"], "handler": "user_detail"},
-    {"path": "/api/posts/", "methods": ["GET", "POST"], "handler": "posts"},
-    {"path": "/api/posts/{post_id}", "methods": ["GET", "PUT", "DELETE"], "handler": "post_detail"},
-    {"path": "/api/categories/", "methods": ["GET", "POST"], "handler": "categories"},
-    {"path": "/admin/", "methods": ["GET"], "handler": "admin_panel"},
+    # Authentication
+    path('auth/register/', views.RegisterView.as_view(), name='register'),
+    path('auth/login/', views.login_view, name='login'),
+    path('auth/logout/', views.logout_view, name='logout'),
+    path('auth/profile/', views.UserProfileView.as_view(), name='profile'),
+    
+    # Categories
+    path('categories/', views.CategoryListView.as_view(), name='category-list'),
+    path('categories/<slug:slug>/', views.CategoryDetailView.as_view(), name='category-detail'),
+    
+    # Products
+    path('products/', views.ProductListView.as_view(), name='product-list'),
+    path('products/<slug:slug>/', views.ProductDetailView.as_view(), name='product-detail'),
+    
+    # Orders
+    path('orders/', views.OrderListView.as_view(), name='order-list'),
+    path('orders/<int:pk>/', views.OrderDetailView.as_view(), name='order-detail'),
+    
+    # Reviews
+    path('reviews/', views.ReviewListCreateView.as_view(), name='review-list-create'),
+    
+    # Dashboard
+    path('dashboard/stats/', views.dashboard_stats, name='dashboard-stats'),
 ]
-
-
-
-# Route registration function
-def include_router(app):
-    """Include all core routes in the main FastAPI app"""
-    from .views import router as core_router
-    app.include_router(core_router, prefix="/core")
