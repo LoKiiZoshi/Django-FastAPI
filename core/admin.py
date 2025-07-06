@@ -1,37 +1,36 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
+from django.contrib import admin
+from .models import User, Product, Category, Order, OrderItem
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ['username', 'email', 'first_name', 'last_name', 'is_active', 'date_joined']
+    list_filter = ['is_active', 'is_staff', 'date_joined']
+    search_fields = ['username', 'email', 'first_name', 'last_name']
+    readonly_fields = ['date_joined', 'last_login']
 
-# Admin routes for managing the application
-@router.get("/dashboard")
-async def admin_dashboard():
-    return {
-        "message": "Admin Dashboard",
-        "modules": ["users", "posts", "settings"],
-        "status": "active"
-    }
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'slug', 'is_active', 'created_at']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['name', 'description']
+    prepopulated_fields = {'slug': ('name',)}
 
-@router.get("/users/stats")
-async def user_stats():
-    return {
-        "total_users": 150,
-        "active_users": 120,
-        "new_users_today": 5
-    }
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ['name', 'category', 'price', 'stock', 'is_active', 'created_at']
+    list_filter = ['category', 'is_active', 'created_at']
+    search_fields = ['name', 'description']
+    prepopulated_fields = {'slug': ('name',)}
 
-# core/apps.py
-"""
-App configuration for core module
-"""
-class CoreConfig:
-    name = 'core'
-    verbose_name = 'Core Application'
-    
-    def __init__(self):
-        self.routes = [
-            "/api/users/",
-            "/api/posts/",
-            "/admin/"
-        ]
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ['id', 'user', 'status', 'total_amount', 'created_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['user__username', 'user__email']
+    readonly_fields = ['created_at', 'updated_at']
+
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ['order', 'product', 'quantity', 'price']
+    list_filter = ['order__status', 'order__created_at']
+    search_fields = ['product__name', 'order__user__username']
