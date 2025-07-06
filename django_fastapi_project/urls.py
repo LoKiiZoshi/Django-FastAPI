@@ -1,24 +1,18 @@
-from fastapi import APIRouter
-from core.urls import router as core_router
+"""
+URL configuration for django_fastapi_project project.
+"""
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
-# Main API router
-api_router = APIRouter(prefix="/api/v1")
-
-# Include app routers
-api_router.include_router(core_router, prefix="/core", tags=["core"])
-
-# URL patterns for reference
 urlpatterns = [
-    # Core app URLs
-    {"path": "/api/v1/core/users/", "name": "user-list"},
-    {"path": "/api/v1/core/users/{id}/", "name": "user-detail"},
-    {"path": "/api/v1/core/posts/", "name": "post-list"},
-    {"path": "/api/v1/core/posts/{id}/", "name": "post-detail"},
-    {"path": "/api/v1/core/categories/", "name": "category-list"},
-    
-    # Admin URLs
-    {"path": "/admin/", "name": "admin"},
-    
-    # Health check
-    {"path": "/health/", "name": "health-check"},
+    path('admin/', admin.site.urls),
+    path('api/', include('core.urls')),
+    path('api-auth/', include('rest_framework.urls')),
 ]
+
+# Serve media files during development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
